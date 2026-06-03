@@ -1,0 +1,27 @@
+## .NET / ASP.NET Core
+bin/
+obj/
+*.user
+*.suo
+*.vs/
+.vs/
+
+## Runtime data (JSON file storage — not part of source)
+App_Data/
+
+## Environment / secrets
+appsettings.*.json
+!appsettings.Development.json
+
+## Rider / JetBrains
+.idea/
+
+## VS Code
+.vscode/
+
+## macOS
+.DS_Store
+
+## NuGet
+*.nupkg
+*.snupkg
