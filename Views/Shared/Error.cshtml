@@ -1,0 +1,16 @@
+@{
+    ViewData["Title"] = "Hata";
+}
+
+<div class="container py-5 text-center">
+    <div class="error-page">
+        <div class="error-icon mb-4">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <h1 class="display-4 fw-bold mb-3">Bir Hata Oluştu</h1>
+        <p class="text-muted mb-4">İşleminiz sırasında beklenmeyen bir hata oluştu. Lütfen tekrar deneyiniz.</p>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-primary-custom">
+            <i class="bi bi-house me-2"></i>Ana Sayfaya Dön
+        </a>
+    </div>
+</div>

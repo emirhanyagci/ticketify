@@ -1,0 +1,203 @@
+@model AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="page-title">
+                    <i class="bi bi-speedometer2 me-2"></i>Admin Dashboard
+                </h1>
+                <p class="page-subtitle">Tüm destek taleplerini yönetin</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container page-content">
+    <!-- İstatistik Kartları -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <a href="@Url.Action("Dashboard", "Admin")" class="stat-card stat-total @(string.IsNullOrEmpty(Model.StatusFilter) ? "active" : "")">
+                <div class="stat-value">@Model.TotalCount</div>
+                <div class="stat-label"><i class="bi bi-collection me-1"></i>Toplam</div>
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a href="@Url.Action("Dashboard", "Admin", new { status = "Open" })" class="stat-card stat-open @(Model.StatusFilter == "Open" ? "active" : "")">
+                <div class="stat-value">@Model.OpenCount</div>
+                <div class="stat-label"><i class="bi bi-envelope-open me-1"></i>Açık</div>
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a href="@Url.Action("Dashboard", "Admin", new { status = "InProgress" })" class="stat-card stat-inprogress @(Model.StatusFilter == "InProgress" ? "active" : "")">
+                <div class="stat-value">@Model.InProgressCount</div>
+                <div class="stat-label"><i class="bi bi-arrow-repeat me-1"></i>İşlemde</div>
+            </a>
+        </div>
+        <div class="col-6 col-md-3">
+            <a href="@Url.Action("Dashboard", "Admin", new { status = "Resolved" })" class="stat-card stat-resolved @(Model.StatusFilter == "Resolved" ? "active" : "")">
+                <div class="stat-value">@Model.ResolvedCount</div>
+                <div class="stat-label"><i class="bi bi-check-circle me-1"></i>Çözüldü</div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Ticket Tablosu -->
+    @if (!Model.Tickets.Any())
+    {
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="bi bi-inbox-fill"></i>
+            </div>
+            <h3 class="empty-title">
+                @(string.IsNullOrEmpty(Model.StatusFilter) ? "Henüz Ticket Bulunmuyor" : "Bu Filtrede Ticket Yok")
+            </h3>
+            <p class="empty-desc">
+                @(string.IsNullOrEmpty(Model.StatusFilter)
+                    ? "Sisteme henüz hiç destek talebi açılmamış."
+                    : $"'{AdminDashboardViewModel.StatusOptions.GetValueOrDefault(Model.StatusFilter, Model.StatusFilter)}' durumunda ticket bulunmuyor.")
+            </p>
+            @if (!string.IsNullOrEmpty(Model.StatusFilter))
+            {
+                <a asp-action="Dashboard" class="btn btn-secondary-custom">
+                    <i class="bi bi-x-circle me-2"></i>Filtreyi Temizle
+                </a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="table-card">
+            <div class="table-responsive">
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th style="width:60px">#ID</th>
+                            <th>Başlık / Açıklama</th>
+                            <th style="width:160px">Oluşturan</th>
+                            <th style="width:110px">Öncelik</th>
+                            <th style="width:220px">Durum Güncelle</th>
+                            <th style="width:130px">Tarih</th>
+                            <th style="width:80px">Sil</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var ticket in Model.Tickets)
+                        {
+                            <tr>
+                                <td><span class="ticket-id">#@ticket.Id</span></td>
+                                <td>
+                                    <span class="ticket-title">@ticket.Title</span>
+                                    @if (ticket.Description.Length > 70)
+                                    {
+                                        <div class="ticket-desc">@ticket.Description.Substring(0, 70)…</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="ticket-desc">@ticket.Description</div>
+                                    }
+                                </td>
+                                <td class="small text-muted">
+                                    <i class="bi bi-person me-1"></i>@ticket.UserEmail
+                                </td>
+                                <td>
+                                    <span class="priority-badge priority-@ticket.Priority.ToLower()">
+                                        @(ticket.Priority == "Low" ? "Düşük" : ticket.Priority == "Medium" ? "Orta" : "Yüksek")
+                                    </span>
+                                </td>
+                                <td>
+                                    <form asp-action="UpdateStatus" method="post" class="d-flex gap-2 align-items-center">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@ticket.Id" />
+                                        <select name="status" class="form-select form-select-sm status-select status-@ticket.Status.ToLower()">
+                                            @if (ticket.Status == "Open")
+                                            {
+                                                <option value="Open" selected>Açık</option>
+                                                <option value="InProgress">İşlemde</option>
+                                                <option value="Resolved">Çözüldü</option>
+                                            }
+                                            else if (ticket.Status == "InProgress")
+                                            {
+                                                <option value="Open">Açık</option>
+                                                <option value="InProgress" selected>İşlemde</option>
+                                                <option value="Resolved">Çözüldü</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="Open">Açık</option>
+                                                <option value="InProgress">İşlemde</option>
+                                                <option value="Resolved" selected>Çözüldü</option>
+                                            }
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-update" title="Güncelle">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                                <td class="text-muted small">
+                                    @ticket.CreatedAt.ToLocalTime().ToString("dd.MM.yy HH:mm")
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-delete"
+                                            data-ticket-id="@ticket.Id"
+                                            data-ticket-title="@ticket.Title"
+                                            onclick="confirmDelete(@ticket.Id, '@Html.Raw(ticket.Title.Replace("'", "\\'"))')">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-footer">
+                <span class="text-muted small">
+                    @if (!string.IsNullOrEmpty(Model.StatusFilter))
+                    {
+                        <span>Filtre: <strong>@AdminDashboardViewModel.StatusOptions.GetValueOrDefault(Model.StatusFilter, Model.StatusFilter)</strong> —</span>
+                    }
+                    Toplam <strong>@Model.Tickets.Count()</strong> ticket gösteriliyor
+                </span>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-custom">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Silme Onayı</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="deleteModalText" class="mb-0"></p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal">İptal</button>
+                <form id="deleteForm" asp-action="Delete" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="deleteTicketId" name="id" />
+                    <button type="submit" class="btn btn-danger-custom">
+                        <i class="bi bi-trash3 me-2"></i>Evet, Sil
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function confirmDelete(id, title) {
+    document.getElementById('deleteTicketId').value = id;
+    document.getElementById('deleteModalText').innerHTML =
+        `<strong>#${id}</strong> numaralı "<em>${title}</em>" başlıklı ticket kalıcı olarak silinecek. Bu işlem geri alınamaz.`;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+}

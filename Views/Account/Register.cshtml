@@ -1,0 +1,68 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Kayıt Ol";
+}
+
+<div class="auth-page">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-5 col-lg-4">
+                <div class="auth-card">
+                    <div class="auth-header text-center mb-4">
+                        <div class="auth-logo mb-3">
+                            <i class="bi bi-person-plus-fill"></i>
+                        </div>
+                        <h1 class="auth-title">Hesap Oluşturun</h1>
+                        <p class="auth-subtitle">Destek talebinizi iletmek için kayıt olun</p>
+                    </div>
+
+                    <form asp-action="Register" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger-custom mb-3"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label-custom"></label>
+                            <div class="input-group-custom">
+                                <span class="input-icon"><i class="bi bi-envelope"></i></span>
+                                <input asp-for="Email" class="form-control-custom" placeholder="ornek@mail.com" autocomplete="email" />
+                            </div>
+                            <span asp-validation-for="Email" class="field-error"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Password" class="form-label-custom"></label>
+                            <div class="input-group-custom">
+                                <span class="input-icon"><i class="bi bi-lock"></i></span>
+                                <input asp-for="Password" class="form-control-custom" placeholder="En az 6 karakter" autocomplete="new-password" />
+                            </div>
+                            <span asp-validation-for="Password" class="field-error"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="ConfirmPassword" class="form-label-custom"></label>
+                            <div class="input-group-custom">
+                                <span class="input-icon"><i class="bi bi-lock-fill"></i></span>
+                                <input asp-for="ConfirmPassword" class="form-control-custom" placeholder="Şifreyi tekrarlayın" autocomplete="new-password" />
+                            </div>
+                            <span asp-validation-for="ConfirmPassword" class="field-error"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary-custom w-100 mb-3">
+                            <i class="bi bi-person-check me-2"></i>Kayıt Ol
+                        </button>
+                    </form>
+
+                    <div class="text-center">
+                        <span class="text-muted small">Zaten hesabınız var mı?</span>
+                        <a asp-action="Login" class="auth-link ms-1">Giriş Yapın</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

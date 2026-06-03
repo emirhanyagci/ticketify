@@ -1,0 +1,88 @@
+@{
+    ViewData["Title"] = "Ana Sayfa";
+}
+
+<div class="hero-section">
+    <div class="hero-bg-pattern"></div>
+    <div class="container position-relative">
+        <div class="row justify-content-center text-center">
+            <div class="col-lg-8">
+                <div class="hero-badge mb-4">
+                    <i class="bi bi-lightning-fill me-2"></i>Hızlı · Hafif · Güvenilir
+                </div>
+                <h1 class="hero-title mb-4">
+                    Teknik Destek<br/>
+                    <span class="text-gradient">Artık Çok Kolay</span>
+                </h1>
+                <p class="hero-subtitle mb-5">
+                    Ticketify ile sorunlarınızı saniyeler içinde iletebilir,<br class="d-none d-md-block"/>
+                    destek ekibiniz anlık olarak müdahale edebilir.
+                </p>
+                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-hero-primary">
+                                <i class="bi bi-speedometer2 me-2"></i>Admin Dashboard
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-controller="Ticket" asp-action="Create" class="btn btn-hero-primary">
+                                <i class="bi bi-plus-circle me-2"></i>Yeni Ticket Aç
+                            </a>
+                            <a asp-controller="Ticket" asp-action="Index" class="btn btn-hero-secondary">
+                                <i class="bi bi-list-ul me-2"></i>Ticket'larımı Görüntüle
+                            </a>
+                        }
+                    }
+                    else
+                    {
+                        <a asp-controller="Account" asp-action="Register" class="btn btn-hero-primary">
+                            <i class="bi bi-person-plus me-2"></i>Hemen Başla
+                        </a>
+                        <a asp-controller="Account" asp-action="Login" class="btn btn-hero-secondary">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Giriş Yap
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="features-section">
+    <div class="container">
+        <div class="row g-4 justify-content-center">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon bg-blue">
+                        <i class="bi bi-lightning-charge-fill"></i>
+                    </div>
+                    <h3 class="feature-title">Anında Başlat</h3>
+                    <p class="feature-desc">Herhangi bir veritabanı kurulumu gerekmez. İndirin ve çalıştırın.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon bg-purple">
+                        <i class="bi bi-shield-check-fill"></i>
+                    </div>
+                    <h3 class="feature-title">Rol Tabanlı Güvenlik</h3>
+                    <p class="feature-desc">Admin ve kullanıcı rolleri ile verileriniz her zaman güvende.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon bg-green">
+                        <i class="bi bi-database-fill-check"></i>
+                    </div>
+                    <h3 class="feature-title">Kalıcı Veri</h3>
+                    <p class="feature-desc">JSON tabanlı depolama ile verileriniz uygulama yeniden başlatılsa bile korunur.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

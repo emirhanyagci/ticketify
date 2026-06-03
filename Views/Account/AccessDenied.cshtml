@@ -1,0 +1,28 @@
+@{
+    ViewData["Title"] = "Erişim Reddedildi";
+}
+
+<div class="container py-5 text-center">
+    <div class="error-page">
+        <div class="error-icon mb-4 text-warning">
+            <i class="bi bi-shield-x-fill"></i>
+        </div>
+        <div class="error-code mb-2">403</div>
+        <h1 class="display-5 fw-bold mb-3">Erişim Reddedildi</h1>
+        <p class="text-muted mb-4">Bu sayfayı görüntülemek için gerekli yetkiye sahip değilsiniz.</p>
+        <div class="d-flex gap-3 justify-content-center flex-wrap">
+            <a asp-controller="Home" asp-action="Index" class="btn btn-primary-custom">
+                <i class="bi bi-house me-2"></i>Ana Sayfaya Dön
+            </a>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                @if (!User.IsInRole("Admin"))
+                {
+                    <a asp-controller="Ticket" asp-action="Index" class="btn btn-secondary-custom">
+                        <i class="bi bi-list-ul me-2"></i>Ticket'larım
+                    </a>
+                }
+            }
+        </div>
+    </div>
+</div>

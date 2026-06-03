@@ -1,0 +1,92 @@
+@model TicketCreateViewModel
+@{
+    ViewData["Title"] = "Yeni Ticket Oluştur";
+}
+
+<div class="page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="page-title">
+                    <i class="bi bi-plus-circle me-2"></i>Yeni Destek Talebi
+                </h1>
+                <p class="page-subtitle">Sorununuzu açıklayın, ekibimiz en kısa sürede yanıt verecektir</p>
+            </div>
+            <div class="col-auto">
+                <a asp-action="Index" class="btn btn-secondary-custom">
+                    <i class="bi bi-arrow-left me-2"></i>Geri Dön
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container page-content">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="form-card">
+                <form asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger-custom mb-4"></div>
+
+                    <div class="mb-4">
+                        <label asp-for="Title" class="form-label-custom"></label>
+                        <input asp-for="Title" class="form-control-custom" placeholder="Sorununuzu kısaca özetleyin..." />
+                        <span asp-validation-for="Title" class="field-error"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Description" class="form-label-custom"></label>
+                        <textarea asp-for="Description" class="form-control-custom" rows="6"
+                                  placeholder="Sorununuzu detaylı olarak açıklayın. Ne zaman başladı, hangi adımları denediniz gibi bilgileri ekleyin..."></textarea>
+                        <span asp-validation-for="Description" class="field-error"></span>
+                    </div>
+
+                    <div class="mb-5">
+                        <label asp-for="Priority" class="form-label-custom"></label>
+                        <div class="priority-selector">
+                            @foreach (var option in TicketCreateViewModel.PriorityOptions)
+                            {
+                                <div class="priority-option">
+                                    <input type="radio" name="Priority" id="priority-@option.Key"
+                                           value="@option.Key" class="priority-radio"
+                                           @(Model.Priority == option.Key ? "checked" : "") />
+                                    <label for="priority-@option.Key" class="priority-label priority-@option.Key.ToLower()">
+                                        @if (option.Key == "Low")
+                                        {
+                                            <i class="bi bi-arrow-down-circle me-1"></i>
+                                        }
+                                        else if (option.Key == "Medium")
+                                        {
+                                            <i class="bi bi-dash-circle me-1"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-arrow-up-circle me-1"></i>
+                                        }
+                                        @option.Value
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                        <span asp-validation-for="Priority" class="field-error"></span>
+                    </div>
+
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-primary-custom flex-fill">
+                            <i class="bi bi-send me-2"></i>Talebi Gönder
+                        </button>
+                        <a asp-action="Index" class="btn btn-secondary-custom">
+                            İptal
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

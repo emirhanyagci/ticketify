@@ -1,0 +1,60 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Giriş Yap";
+}
+
+<div class="auth-page">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-5 col-lg-4">
+                <div class="auth-card">
+                    <div class="auth-header text-center mb-4">
+                        <div class="auth-logo mb-3">
+                            <i class="bi bi-ticket-detailed-fill"></i>
+                        </div>
+                        <h1 class="auth-title">Tekrar Hoş Geldiniz</h1>
+                        <p class="auth-subtitle">Ticketify hesabınıza giriş yapın</p>
+                    </div>
+
+                    <form asp-action="Login" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger-custom mb-3"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label-custom"></label>
+                            <div class="input-group-custom">
+                                <span class="input-icon"><i class="bi bi-envelope"></i></span>
+                                <input asp-for="Email" class="form-control-custom" placeholder="ornek@mail.com" autocomplete="email" />
+                            </div>
+                            <span asp-validation-for="Email" class="field-error"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Password" class="form-label-custom"></label>
+                            <div class="input-group-custom">
+                                <span class="input-icon"><i class="bi bi-lock"></i></span>
+                                <input asp-for="Password" class="form-control-custom" placeholder="••••••••" autocomplete="current-password" />
+                            </div>
+                            <span asp-validation-for="Password" class="field-error"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary-custom w-100 mb-3">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Giriş Yap
+                        </button>
+                    </form>
+
+                    <div class="text-center">
+                        <span class="text-muted small">Hesabınız yok mu?</span>
+                        <a asp-action="Register" class="auth-link ms-1">Kayıt Olun</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
