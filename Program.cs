@@ -24,9 +24,11 @@ builder.Services.AddAuthorization();
 // Repository Pattern — Singleton (thread-safe via SemaphoreSlim)
 builder.Services.AddSingleton<IUserRepository, JsonUserRepository>();
 builder.Services.AddSingleton<ITicketRepository, JsonTicketRepository>();
+builder.Services.AddSingleton<ICommentRepository, JsonCommentRepository>();
 
-// Auth Service
+// Services
 builder.Services.AddSingleton<AuthService>();
+builder.Services.AddSingleton<AvatarService>();
 
 var app = builder.Build();
 
@@ -65,17 +67,26 @@ static async Task SeedDataAsync(WebApplication app)
     if (!File.Exists(ticketsFile))
         await File.WriteAllTextAsync(ticketsFile, "[]");
 
+    // comments.json oluştur
+    var commentsFile = Path.Combine(dataDir, "comments.json");
+    if (!File.Exists(commentsFile))
+        await File.WriteAllTextAsync(commentsFile, "[]");
+
     // users.json — seed admin kullanıcı
     var usersFile = Path.Combine(dataDir, "users.json");
     if (!File.Exists(usersFile))
     {
         var authService = app.Services.GetRequiredService<AuthService>();
+        var avatarService = app.Services.GetRequiredService<AvatarService>();
+
         var adminUser = new User
         {
             Id = 1,
+            FullName = "Sistem Yöneticisi",
             Email = "admin@ticketify.com",
             PasswordHash = authService.HashPassword("Admin123!"),
             Role = "Admin",
+            AvatarUrl = avatarService.GenerateAvatarUrl("admin@ticketify.com"),
             CreatedAt = DateTime.UtcNow
         };
 
@@ -86,5 +97,39 @@ static async Task SeedDataAsync(WebApplication app)
         await File.WriteAllTextAsync(usersFile, json);
 
         Console.WriteLine("✅ Admin kullanıcı oluşturuldu: admin@ticketify.com / Admin123!");
+    }
+    else
+    {
+        // Mevcut kullanıcıları güncelle: FullName veya AvatarUrl yoksa tamamla
+        var usersJson = await File.ReadAllTextAsync(usersFile);
+        var users = System.Text.Json.JsonSerializer.Deserialize<List<User>>(
+            usersJson,
+            new System.Text.Json.JsonSerializerOptions { WriteIndented = true }) ?? new List<User>();
+
+        var avatarService = app.Services.GetRequiredService<AvatarService>();
+        bool changed = false;
+
+        foreach (var u in users)
+        {
+            if (string.IsNullOrEmpty(u.AvatarUrl))
+            {
+                u.AvatarUrl = avatarService.GenerateAvatarUrl(u.Email);
+                changed = true;
+            }
+            if (string.IsNullOrEmpty(u.FullName))
+            {
+                u.FullName = u.Email.Split('@')[0];
+                changed = true;
+            }
+        }
+
+        if (changed)
+        {
+            var updatedJson = System.Text.Json.JsonSerializer.Serialize(
+                users,
+                new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+            await File.WriteAllTextAsync(usersFile, updatedJson);
+            Console.WriteLine("✅ Mevcut kullanıcılar güncellendi (avatar/fullname).");
+        }
     }
 }
