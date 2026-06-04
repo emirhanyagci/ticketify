@@ -19,28 +19,34 @@
 <div class="container page-content">
     <!-- İstatistik Kartları -->
     <div class="row g-3 mb-4">
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md-2half">
             <a href="@Url.Action("Dashboard", "Admin")" class="stat-card stat-total @(string.IsNullOrEmpty(Model.StatusFilter) ? "active" : "")">
                 <div class="stat-value">@Model.TotalCount</div>
                 <div class="stat-label"><i class="bi bi-collection me-1"></i>Toplam</div>
             </a>
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md-2half">
             <a href="@Url.Action("Dashboard", "Admin", new { status = "Open" })" class="stat-card stat-open @(Model.StatusFilter == "Open" ? "active" : "")">
                 <div class="stat-value">@Model.OpenCount</div>
                 <div class="stat-label"><i class="bi bi-envelope-open me-1"></i>Açık</div>
             </a>
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md-2half">
             <a href="@Url.Action("Dashboard", "Admin", new { status = "InProgress" })" class="stat-card stat-inprogress @(Model.StatusFilter == "InProgress" ? "active" : "")">
                 <div class="stat-value">@Model.InProgressCount</div>
                 <div class="stat-label"><i class="bi bi-arrow-repeat me-1"></i>İşlemde</div>
             </a>
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md-2half">
             <a href="@Url.Action("Dashboard", "Admin", new { status = "Resolved" })" class="stat-card stat-resolved @(Model.StatusFilter == "Resolved" ? "active" : "")">
                 <div class="stat-value">@Model.ResolvedCount</div>
                 <div class="stat-label"><i class="bi bi-check-circle me-1"></i>Çözüldü</div>
+            </a>
+        </div>
+        <div class="col-6 col-md-2half">
+            <a href="@Url.Action("Dashboard", "Admin")" class="stat-card stat-unassigned">
+                <div class="stat-value">@Model.UnassignedCount</div>
+                <div class="stat-label"><i class="bi bi-person-dash me-1"></i>Atanmamış</div>
             </a>
         </div>
     </div>
@@ -77,11 +83,13 @@
                         <tr>
                             <th style="width:60px">#ID</th>
                             <th>Başlık / Açıklama</th>
-                            <th style="width:160px">Oluşturan</th>
-                            <th style="width:110px">Öncelik</th>
-                            <th style="width:220px">Durum Güncelle</th>
-                            <th style="width:130px">Tarih</th>
-                            <th style="width:80px">Sil</th>
+                            <th style="width:120px">Departman</th>
+                            <th style="width:160px">Bildiren</th>
+                            <th style="width:160px">Atanan</th>
+                            <th style="width:100px">Öncelik</th>
+                            <th style="width:150px">Durum</th>
+                            <th style="width:110px">Tarih</th>
+                            <th style="width:80px">İşlem</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -90,18 +98,63 @@
                             <tr>
                                 <td><span class="ticket-id">#@ticket.Id</span></td>
                                 <td>
-                                    <span class="ticket-title">@ticket.Title</span>
-                                    @if (ticket.Description.Length > 70)
+                                    <a asp-controller="Ticket" asp-action="Details" asp-route-id="@ticket.Id" class="ticket-title-link">
+                                        @ticket.Title
+                                    </a>
+                                    @if (ticket.Description.Length > 60)
                                     {
-                                        <div class="ticket-desc">@ticket.Description.Substring(0, 70)…</div>
+                                        <div class="ticket-desc">@ticket.Description.Substring(0, 60)…</div>
                                     }
                                     else
                                     {
                                         <div class="ticket-desc">@ticket.Description</div>
                                     }
                                 </td>
-                                <td class="small text-muted">
-                                    <i class="bi bi-person me-1"></i>@ticket.UserEmail
+                                <td>
+                                    <span class="dept-badge dept-@ticket.Department.ToLower()">
+                                        @(ticket.Department switch {
+                                            "Software" => "Yazılım",
+                                            "Hardware" => "Donanım",
+                                            "Network" => "Ağ / Altyapı",
+                                            "Other" => "Diğer",
+                                            _ => "Genel"
+                                        })
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if (!string.IsNullOrEmpty(ticket.UserAvatarUrl))
+                                        {
+                                            <img src="@ticket.UserAvatarUrl" alt="@ticket.UserFullName" class="avatar-circle avatar-xs" />
+                                        }
+                                        else
+                                        {
+                                            <div class="avatar-fallback avatar-xs"><i class="bi bi-person-fill"></i></div>
+                                        }
+                                        <span class="small text-muted">@(string.IsNullOrEmpty(ticket.UserFullName) ? ticket.UserEmail : ticket.UserFullName)</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (ticket.AssigneeId.HasValue)
+                                    {
+                                        <div class="d-flex align-items-center gap-2">
+                                            @if (!string.IsNullOrEmpty(ticket.AssigneeAvatarUrl))
+                                            {
+                                                <img src="@ticket.AssigneeAvatarUrl" alt="@ticket.AssigneeFullName" class="avatar-circle avatar-xs" />
+                                            }
+                                            else
+                                            {
+                                                <div class="avatar-fallback avatar-xs"><i class="bi bi-person-fill"></i></div>
+                                            }
+                                            <span class="small text-muted">@ticket.AssigneeFullName</span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="unassigned-badge-sm">
+                                            <i class="bi bi-person-dash me-1"></i>Atanmamış
+                                        </span>
+                                    }
                                 </td>
                                 <td>
                                     <span class="priority-badge priority-@ticket.Priority.ToLower()">
@@ -109,10 +162,11 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <form asp-action="UpdateStatus" method="post" class="d-flex gap-2 align-items-center">
+                                    <form asp-action="UpdateStatus" method="post" class="d-flex align-items-center">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="id" value="@ticket.Id" />
-                                        <select name="status" class="form-select form-select-sm status-select status-@ticket.Status.ToLower()">
+                                        <select name="status" class="form-select form-select-sm status-select status-@ticket.Status.ToLower()"
+                                                onchange="this.form.submit()">
                                             @if (ticket.Status == "Open")
                                             {
                                                 <option value="Open" selected>Açık</option>
@@ -132,21 +186,23 @@
                                                 <option value="Resolved" selected>Çözüldü</option>
                                             }
                                         </select>
-                                        <button type="submit" class="btn btn-sm btn-update" title="Güncelle">
-                                            <i class="bi bi-check-lg"></i>
-                                        </button>
                                     </form>
                                 </td>
                                 <td class="text-muted small">
                                     @ticket.CreatedAt.ToLocalTime().ToString("dd.MM.yy HH:mm")
                                 </td>
                                 <td>
-                                    <button type="button" class="btn btn-sm btn-delete"
-                                            data-ticket-id="@ticket.Id"
-                                            data-ticket-title="@ticket.Title"
-                                            onclick="confirmDelete(@ticket.Id, '@Html.Raw(ticket.Title.Replace("'", "\\'"))')">
-                                        <i class="bi bi-trash3"></i>
-                                    </button>
+                                    <div class="d-flex gap-1">
+                                        <a asp-controller="Ticket" asp-action="Details" asp-route-id="@ticket.Id"
+                                           class="btn-icon-sm" title="Detaylar">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <button type="button" class="btn-icon-sm btn-icon-danger"
+                                                onclick="confirmDelete(@ticket.Id, '@Html.Raw(ticket.Title.Replace("'", "\\'"))')"
+                                                title="Sil">
+                                            <i class="bi bi-trash3"></i>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         }
@@ -196,7 +252,7 @@
 function confirmDelete(id, title) {
     document.getElementById('deleteTicketId').value = id;
     document.getElementById('deleteModalText').innerHTML =
-        `<strong>#${id}</strong> numaralı "<em>${title}</em>" başlıklı ticket kalıcı olarak silinecek. Bu işlem geri alınamaz.`;
+        `<strong>#${id}</strong> numaralı "<em>${title}</em>" başlıklı ticket kalıcı olarak silinecek.`;
     new bootstrap.Modal(document.getElementById('deleteModal')).show();
 }
 </script>
