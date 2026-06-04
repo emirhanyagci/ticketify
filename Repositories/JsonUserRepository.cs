@@ -77,6 +77,38 @@ public class JsonUserRepository : IUserRepository
         }
     }
 
+    public async Task<IEnumerable<User>> GetByRoleAsync(string role)
+    {
+        await _lock.WaitAsync();
+        try
+        {
+            var users = await ReadAllAsync();
+            return users.Where(u => u.Role.Equals(role, StringComparison.OrdinalIgnoreCase))
+                        .OrderBy(u => u.FullName);
+        }
+        finally
+        {
+            _lock.Release();
+        }
+    }
+
+    public async Task<IEnumerable<User>> GetByDepartmentAsync(string department)
+    {
+        await _lock.WaitAsync();
+        try
+        {
+            var users = await ReadAllAsync();
+            return users.Where(u => u.Role == "Employee" &&
+                                    u.Department != null &&
+                                    u.Department.Equals(department, StringComparison.OrdinalIgnoreCase))
+                        .OrderBy(u => u.FullName);
+        }
+        finally
+        {
+            _lock.Release();
+        }
+    }
+
     public async Task<User> CreateAsync(User user)
     {
         await _lock.WaitAsync();
@@ -88,6 +120,44 @@ public class JsonUserRepository : IUserRepository
             users.Add(user);
             await WriteAllAsync(users);
             return user;
+        }
+        finally
+        {
+            _lock.Release();
+        }
+    }
+
+    public async Task<User?> UpdateAsync(User updatedUser)
+    {
+        await _lock.WaitAsync();
+        try
+        {
+            var users = await ReadAllAsync();
+            var index = users.FindIndex(u => u.Id == updatedUser.Id);
+            if (index < 0) return null;
+
+            users[index] = updatedUser;
+            await WriteAllAsync(users);
+            return updatedUser;
+        }
+        finally
+        {
+            _lock.Release();
+        }
+    }
+
+    public async Task<bool> DeleteAsync(int id)
+    {
+        await _lock.WaitAsync();
+        try
+        {
+            var users = await ReadAllAsync();
+            var user = users.FirstOrDefault(u => u.Id == id);
+            if (user == null) return false;
+
+            users.Remove(user);
+            await WriteAllAsync(users);
+            return true;
         }
         finally
         {
