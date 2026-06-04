@@ -1,6 +1,13 @@
 @model AdminDashboardViewModel
 @{
     ViewData["Title"] = "Admin Dashboard";
+    var hasFilters = !string.IsNullOrWhiteSpace(Model.Search)
+        || !string.IsNullOrWhiteSpace(Model.StatusFilter)
+        || !string.IsNullOrWhiteSpace(Model.DepartmentFilter)
+        || !string.IsNullOrWhiteSpace(Model.PriorityFilter)
+        || !string.IsNullOrWhiteSpace(Model.AssigneeFilter)
+        || Model.DateFrom.HasValue
+        || Model.DateTo.HasValue;
 }
 
 <div class="page-header">
@@ -44,11 +51,87 @@
             </a>
         </div>
         <div class="col-6 col-md-2half">
-            <a href="@Url.Action("Dashboard", "Admin")" class="stat-card stat-unassigned">
+            <a href="@Url.Action("Dashboard", "Admin", new { assignee = "unassigned" })" class="stat-card stat-unassigned @(Model.AssigneeFilter == "unassigned" ? "active" : "")">
                 <div class="stat-value">@Model.UnassignedCount</div>
                 <div class="stat-label"><i class="bi bi-person-dash me-1"></i>Atanmamış</div>
             </a>
         </div>
+    </div>
+
+    <!-- Filtreler -->
+    <div class="dashboard-filter-panel mb-4">
+        <form asp-action="Dashboard" method="get">
+            <div class="row g-3 align-items-end">
+                <div class="col-12 col-lg-4">
+                    <label class="filter-label" for="search">Arama</label>
+                    <div class="filter-search-wrap">
+                        <i class="bi bi-search"></i>
+                        <input id="search" name="search" value="@Model.Search" class="form-control form-control-custom filter-search-input"
+                               placeholder="Başlık, açıklama, bildiren veya atanan" />
+                    </div>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <label class="filter-label" for="status">Durum</label>
+                    <select id="status" name="status" class="form-select form-control-custom">
+                        <option value="">Tümü</option>
+                        @foreach (var option in AdminDashboardViewModel.StatusOptions)
+                        {
+                            <option value="@option.Key" selected="@(Model.StatusFilter == option.Key)">@option.Value</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <label class="filter-label" for="department">Departman</label>
+                    <select id="department" name="department" class="form-select form-control-custom">
+                        <option value="">Tümü</option>
+                        @foreach (var option in AdminDashboardViewModel.DepartmentOptions)
+                        {
+                            <option value="@option.Key" selected="@(Model.DepartmentFilter == option.Key)">@option.Value</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <label class="filter-label" for="priority">Öncelik</label>
+                    <select id="priority" name="priority" class="form-select form-control-custom">
+                        <option value="">Tümü</option>
+                        @foreach (var option in AdminDashboardViewModel.PriorityOptions)
+                        {
+                            <option value="@option.Key" selected="@(Model.PriorityFilter == option.Key)">@option.Value</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <label class="filter-label" for="assignee">Atanan</label>
+                    <select id="assignee" name="assignee" class="form-select form-control-custom">
+                        <option value="">Tümü</option>
+                        <option value="unassigned" selected="@(Model.AssigneeFilter == "unassigned")">Atanmamış</option>
+                        @foreach (var employee in Model.Employees)
+                        {
+                            <option value="@employee.Id" selected="@(Model.AssigneeFilter == employee.Id.ToString())">@employee.FullName</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <label class="filter-label" for="dateFrom">Başlangıç</label>
+                    <input id="dateFrom" name="dateFrom" type="date" value="@Model.DateFrom?.ToString("yyyy-MM-dd")" class="form-control form-control-custom" />
+                </div>
+                <div class="col-6 col-lg-2">
+                    <label class="filter-label" for="dateTo">Bitiş</label>
+                    <input id="dateTo" name="dateTo" type="date" value="@Model.DateTo?.ToString("yyyy-MM-dd")" class="form-control form-control-custom" />
+                </div>
+                <div class="col-12 col-lg filter-actions">
+                    <button type="submit" class="btn btn-primary-custom">
+                        <i class="bi bi-funnel me-2"></i>Filtrele
+                    </button>
+                    @if (hasFilters)
+                    {
+                        <a asp-action="Dashboard" class="btn btn-secondary-custom">
+                            <i class="bi bi-x-circle me-2"></i>Temizle
+                        </a>
+                    }
+                </div>
+            </div>
+        </form>
     </div>
 
     <!-- Ticket Tablosu -->
@@ -59,14 +142,14 @@
                 <i class="bi bi-inbox-fill"></i>
             </div>
             <h3 class="empty-title">
-                @(string.IsNullOrEmpty(Model.StatusFilter) ? "Henüz Ticket Bulunmuyor" : "Bu Filtrede Ticket Yok")
+                @(hasFilters ? "Bu Filtrede Ticket Yok" : "Henüz Ticket Bulunmuyor")
             </h3>
             <p class="empty-desc">
-                @(string.IsNullOrEmpty(Model.StatusFilter)
+                @(!hasFilters
                     ? "Sisteme henüz hiç destek talebi açılmamış."
-                    : $"'{AdminDashboardViewModel.StatusOptions.GetValueOrDefault(Model.StatusFilter, Model.StatusFilter)}' durumunda ticket bulunmuyor.")
+                    : "Seçtiğiniz arama ve filtrelere uyan destek talebi bulunmuyor.")
             </p>
-            @if (!string.IsNullOrEmpty(Model.StatusFilter))
+            @if (hasFilters)
             {
                 <a asp-action="Dashboard" class="btn btn-secondary-custom">
                     <i class="bi bi-x-circle me-2"></i>Filtreyi Temizle
@@ -147,13 +230,31 @@
                                                 <div class="avatar-fallback avatar-xs"><i class="bi bi-person-fill"></i></div>
                                             }
                                             <span class="small text-muted">@ticket.AssigneeFullName</span>
+                                            @if (ticket.AssigneeId.HasValue)
+                                            {
+                                                <span class="workload-badge" title="Aktif ticket sayısı">
+                                                    @Model.EmployeeActiveTicketCounts.GetValueOrDefault(ticket.AssigneeId.Value)
+                                                </span>
+                                            }
                                         </div>
                                     }
                                     else
                                     {
-                                        <span class="unassigned-badge-sm">
-                                            <i class="bi bi-person-dash me-1"></i>Atanmamış
-                                        </span>
+                                        <div class="quick-assign-wrap">
+                                            <span class="unassigned-badge-sm">
+                                                <i class="bi bi-person-dash me-1"></i>Atanmamış
+                                            </span>
+                                            @if (Model.SuggestedAssignees.TryGetValue(ticket.Id, out var suggestedEmployee))
+                                            {
+                                                <div class="quick-assign-suggestion">
+                                                    <i class="bi bi-magic"></i>
+                                                    <span>@suggestedEmployee.FullName</span>
+                                                    <span class="workload-badge" title="Aktif ticket sayısı">
+                                                        @Model.EmployeeActiveTicketCounts.GetValueOrDefault(suggestedEmployee.Id)
+                                                    </span>
+                                                </div>
+                                            }
+                                        </div>
                                     }
                                 </td>
                                 <td>
@@ -197,6 +298,16 @@
                                            class="btn-icon-sm" title="Detaylar">
                                             <i class="bi bi-eye"></i>
                                         </a>
+                                        @if (ticket.AssigneeId == null && Model.SuggestedAssignees.ContainsKey(ticket.Id))
+                                        {
+                                            <form asp-action="QuickAssignTicket" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="ticketId" value="@ticket.Id" />
+                                                <button type="submit" class="btn-icon-sm btn-icon-success" title="Önerilen çalışana hızlı ata">
+                                                    <i class="bi bi-person-check"></i>
+                                                </button>
+                                            </form>
+                                        }
                                         <button type="button" class="btn-icon-sm btn-icon-danger"
                                                 onclick="confirmDelete(@ticket.Id, '@Html.Raw(ticket.Title.Replace("'", "\\'"))')"
                                                 title="Sil">
@@ -211,9 +322,9 @@
             </div>
             <div class="table-footer">
                 <span class="text-muted small">
-                    @if (!string.IsNullOrEmpty(Model.StatusFilter))
+                    @if (hasFilters)
                     {
-                        <span>Filtre: <strong>@AdminDashboardViewModel.StatusOptions.GetValueOrDefault(Model.StatusFilter, Model.StatusFilter)</strong> —</span>
+                        <span>Filtreli sonuç —</span>
                     }
                     Toplam <strong>@Model.Tickets.Count()</strong> ticket gösteriliyor
                 </span>
