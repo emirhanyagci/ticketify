@@ -1,0 +1,90 @@
+@model EmployeeCreateViewModel
+@{
+    ViewData["Title"] = "Yeni Çalışan Ekle";
+}
+
+<div class="page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="page-title">
+                    <i class="bi bi-person-plus me-2"></i>Yeni Çalışan Ekle
+                </h1>
+                <p class="page-subtitle">Sisteme yeni bir çalışan kaydı oluşturun</p>
+            </div>
+            <div class="col-auto">
+                <a asp-action="Index" class="btn btn-secondary-custom">
+                    <i class="bi bi-arrow-left me-1"></i>Geri
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container page-content">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="auth-card">
+                <div class="auth-card-body">
+                    <form asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-4">
+                            <label asp-for="FullName" class="form-label-custom"></label>
+                            <div class="input-group-custom">
+                                <i class="bi bi-person input-icon"></i>
+                                <input asp-for="FullName" class="form-control form-control-custom"
+                                       placeholder="Ahmet Yılmaz" autocomplete="name" />
+                            </div>
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Email" class="form-label-custom"></label>
+                            <div class="input-group-custom">
+                                <i class="bi bi-envelope input-icon"></i>
+                                <input asp-for="Email" class="form-control form-control-custom"
+                                       placeholder="ahmet@ticketify.com" autocomplete="email" />
+                            </div>
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Password" class="form-label-custom"></label>
+                            <div class="input-group-custom">
+                                <i class="bi bi-lock input-icon"></i>
+                                <input asp-for="Password" type="password" class="form-control form-control-custom"
+                                       placeholder="En az 6 karakter" autocomplete="new-password" />
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Department" class="form-label-custom"></label>
+                            <select asp-for="Department" class="form-select form-control-custom">
+                                @foreach (var dept in EmployeeCreateViewModel.DepartmentOptions)
+                                {
+                                    <option value="@dept.Key">@dept.Value</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Department" class="text-danger small"></span>
+                        </div>
+
+                        <div class="info-box mb-4">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Çalışanın profil fotoğrafı <strong>DiceBear</strong> servisi üzerinden otomatik olarak atanacaktır.
+                        </div>
+
+                        <button type="submit" class="btn btn-primary-custom w-100">
+                            <i class="bi bi-person-check me-2"></i>Çalışanı Ekle
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

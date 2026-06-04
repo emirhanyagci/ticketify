@@ -1,0 +1,163 @@
+@model EmployeeListViewModel
+@{
+    ViewData["Title"] = "Çalışan Yönetimi";
+}
+
+<div class="page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="page-title">
+                    <i class="bi bi-people-fill me-2"></i>Çalışan Yönetimi
+                </h1>
+                <p class="page-subtitle">Sistemdeki çalışanları yönetin</p>
+            </div>
+            <div class="col-auto">
+                <a asp-action="Create" class="btn btn-primary-custom">
+                    <i class="bi bi-person-plus me-2"></i>Yeni Çalışan Ekle
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container page-content">
+
+    <!-- Departman Filtresi -->
+    <div class="dept-filter-bar mb-4">
+        <a href="@Url.Action("Index", "Employee")"
+           class="dept-filter-btn @(string.IsNullOrEmpty(Model.DepartmentFilter) ? "active" : "")">
+            <i class="bi bi-grid me-1"></i>Tümü
+            <span class="dept-filter-count">@Model.TotalCount</span>
+        </a>
+        @foreach (var dept in EmployeeListViewModel.DepartmentOptions)
+        {
+            var count = Model.Employees.Count(e => e.Department == dept.Key);
+            var totalForDept = Model.TotalCount > 0 ? Model.Employees.Count(e => e.Department == dept.Key) : 0;
+            <a href="@Url.Action("Index", "Employee", new { department = dept.Key })"
+               class="dept-filter-btn dept-@dept.Key.ToLower() @(Model.DepartmentFilter == dept.Key ? "active" : "")">
+                @dept.Value
+            </a>
+        }
+    </div>
+
+    @if (!Model.Employees.Any())
+    {
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="bi bi-person-x-fill"></i>
+            </div>
+            <h3 class="empty-title">
+                @(string.IsNullOrEmpty(Model.DepartmentFilter) ? "Henüz Çalışan Eklenmemiş" : "Bu Departmanda Çalışan Yok")
+            </h3>
+            <p class="empty-desc">
+                @(string.IsNullOrEmpty(Model.DepartmentFilter)
+                    ? "İlk çalışanı eklemek için 'Yeni Çalışan Ekle' butonuna tıklayın."
+                    : $"'{EmployeeListViewModel.DepartmentOptions.GetValueOrDefault(Model.DepartmentFilter, Model.DepartmentFilter)}' departmanında kayıtlı çalışan bulunmuyor.")
+            </p>
+            @if (!string.IsNullOrEmpty(Model.DepartmentFilter))
+            {
+                <a asp-action="Index" class="btn btn-secondary-custom">
+                    <i class="bi bi-x-circle me-2"></i>Filtreyi Temizle
+                </a>
+            }
+            else
+            {
+                <a asp-action="Create" class="btn btn-primary-custom">
+                    <i class="bi bi-person-plus me-2"></i>İlk Çalışanı Ekle
+                </a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="employee-grid">
+            @foreach (var emp in Model.Employees)
+            {
+                <div class="employee-card">
+                    <div class="employee-card-header">
+                        <div class="employee-avatar-wrap">
+                            @if (!string.IsNullOrEmpty(emp.AvatarUrl))
+                            {
+                                <img src="@emp.AvatarUrl" alt="@emp.FullName" class="employee-avatar-img" />
+                            }
+                            else
+                            {
+                                <div class="employee-avatar-fallback">
+                                    <i class="bi bi-person-fill"></i>
+                                </div>
+                            }
+                        </div>
+                        <div class="employee-card-actions">
+                            <a asp-action="Edit" asp-route-id="@emp.Id" class="btn-icon-sm" title="Düzenle">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <button type="button" class="btn-icon-sm btn-icon-danger"
+                                    onclick="confirmDeleteEmployee(@emp.Id, '@Html.Raw(emp.FullName.Replace("'", "\\'"))')"
+                                    title="Sil">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="employee-card-body">
+                        <h5 class="employee-name">@emp.FullName</h5>
+                        <p class="employee-email">
+                            <i class="bi bi-envelope me-1"></i>@emp.Email
+                        </p>
+                        <div class="employee-meta">
+                            <span class="dept-badge dept-@(emp.Department?.ToLower() ?? "general")">
+                                @EmployeeListViewModel.DepartmentOptions.GetValueOrDefault(emp.Department ?? "General", "Genel")
+                            </span>
+                            <span class="employee-since">
+                                <i class="bi bi-calendar3 me-1"></i>@emp.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="table-footer mt-3">
+            <span class="text-muted small">
+                Toplam <strong>@Model.Employees.Count()</strong> çalışan gösteriliyor
+            </span>
+        </div>
+    }
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteEmployeeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-custom">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Silme Onayı
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="deleteEmployeeModalText" class="mb-0"></p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal">İptal</button>
+                <form id="deleteEmployeeForm" asp-action="Delete" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="deleteEmployeeId" name="id" />
+                    <button type="submit" class="btn btn-danger-custom">
+                        <i class="bi bi-trash3 me-2"></i>Evet, Sil
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function confirmDeleteEmployee(id, name) {
+    document.getElementById('deleteEmployeeId').value = id;
+    document.getElementById('deleteEmployeeModalText').innerHTML =
+        `<strong>${name}</strong> adlı çalışan sistemden silinecek. Bu işlem geri alınamaz.`;
+    new bootstrap.Modal(document.getElementById('deleteEmployeeModal')).show();
+}
+</script>
+}

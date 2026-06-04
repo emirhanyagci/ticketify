@@ -1,0 +1,86 @@
+@model EmployeeEditViewModel
+@{
+    ViewData["Title"] = "Çalışan Düzenle";
+}
+
+<div class="page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="page-title">
+                    <i class="bi bi-pencil-square me-2"></i>Çalışan Düzenle
+                </h1>
+                <p class="page-subtitle">Çalışan bilgilerini güncelleyin</p>
+            </div>
+            <div class="col-auto">
+                <a asp-action="Index" class="btn btn-secondary-custom">
+                    <i class="bi bi-arrow-left me-1"></i>Geri
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container page-content">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="auth-card">
+                <div class="auth-card-body">
+                    <form asp-action="Edit" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="mb-4">
+                            <label asp-for="FullName" class="form-label-custom"></label>
+                            <div class="input-group-custom">
+                                <i class="bi bi-person input-icon"></i>
+                                <input asp-for="FullName" class="form-control form-control-custom"
+                                       placeholder="Ad Soyad" autocomplete="name" />
+                            </div>
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Email" class="form-label-custom"></label>
+                            <div class="input-group-custom">
+                                <i class="bi bi-envelope input-icon"></i>
+                                <input asp-for="Email" class="form-control form-control-custom"
+                                       placeholder="E-posta adresi" autocomplete="email" />
+                            </div>
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="NewPassword" class="form-label-custom"></label>
+                            <div class="input-group-custom">
+                                <i class="bi bi-lock input-icon"></i>
+                                <input asp-for="NewPassword" type="password" class="form-control form-control-custom"
+                                       placeholder="Boş bırakırsanız şifre değişmez" autocomplete="new-password" />
+                            </div>
+                            <span asp-validation-for="NewPassword" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Department" class="form-label-custom"></label>
+                            <select asp-for="Department" class="form-select form-control-custom">
+                                @foreach (var dept in EmployeeEditViewModel.DepartmentOptions)
+                                {
+                                    <option value="@dept.Key">@dept.Value</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Department" class="text-danger small"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary-custom w-100">
+                            <i class="bi bi-check-circle me-2"></i>Değişiklikleri Kaydet
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}
