@@ -1,0 +1,362 @@
+@model TicketDetailViewModel
+@using System.Security.Claims
+@{
+    ViewData["Title"] = $"Ticket #{Model.Ticket.Id}";
+    var deptMap = new Dictionary<string, string> {
+        {"Software","Yazılım"},{"Hardware","Donanım"},{"Network","Ağ / Altyapı"},{"Other","Diğer"},{"General","Genel"}
+    };
+}
+
+<div class="page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="ticket-id" style="font-size:1rem">#@Model.Ticket.Id</span>
+                    <span class="status-badge status-@Model.Ticket.Status.ToLower()">
+                        @(Model.Ticket.Status == "Open" ? "Açık" : Model.Ticket.Status == "InProgress" ? "İşlemde" : "Çözüldü")
+                    </span>
+                    <span class="priority-badge priority-@Model.Ticket.Priority.ToLower()">
+                        @(Model.Ticket.Priority == "Low" ? "Düşük" : Model.Ticket.Priority == "Medium" ? "Orta" : "Yüksek")
+                    </span>
+                </div>
+                <h1 class="page-title mb-0">@Model.Ticket.Title</h1>
+            </div>
+            <div class="col-auto">
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-secondary-custom">
+                        <i class="bi bi-arrow-left me-1"></i>Dashboard
+                    </a>
+                }
+                else
+                {
+                    <a asp-controller="Ticket" asp-action="Index" class="btn btn-secondary-custom">
+                        <i class="bi bi-arrow-left me-1"></i>Geri
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container page-content">
+    <div class="row g-4">
+
+        <!-- Sol: Ana İçerik -->
+        <div class="col-lg-8">
+
+            <!-- Açıklama -->
+            <div class="detail-section-card mb-4">
+                <div class="detail-section-title">
+                    <i class="bi bi-file-text me-2"></i>Açıklama
+                </div>
+                <div class="detail-description-text">@Model.Ticket.Description</div>
+            </div>
+
+            <!-- Durum Güncelle -->
+            @if (Model.CanUpdateStatus)
+            {
+                <div class="detail-section-card mb-4">
+                    <div class="detail-section-title">
+                        <i class="bi bi-arrow-repeat me-2"></i>Durumu Güncelle
+                    </div>
+                    <form asp-controller="Ticket" asp-action="UpdateStatus" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Ticket.Id" />
+                        <select name="status" class="form-select form-control-custom status-select status-@Model.Ticket.Status.ToLower()" onchange="this.form.submit()">
+                            @if (Model.Ticket.Status == "Open")
+                            {
+                                <option value="Open" selected>Açık</option>
+                                <option value="InProgress">İşlemde</option>
+                                <option value="Resolved">Çözüldü</option>
+                            }
+                            else if (Model.Ticket.Status == "InProgress")
+                            {
+                                <option value="Open">Açık</option>
+                                <option value="InProgress" selected>İşlemde</option>
+                                <option value="Resolved">Çözüldü</option>
+                            }
+                            else
+                            {
+                                <option value="Open">Açık</option>
+                                <option value="InProgress">İşlemde</option>
+                                <option value="Resolved" selected>Çözüldü</option>
+                            }
+                        </select>
+                    </form>
+                </div>
+            }
+
+            <!-- Yorumlar -->
+            <div class="detail-section-card mb-4">
+                <div class="detail-section-title">
+                    <i class="bi bi-chat-dots me-2"></i>Yorumlar
+                    <span class="comment-count-badge">@Model.Comments.Count()</span>
+                </div>
+
+                @if (!Model.Comments.Any())
+                {
+                    <div class="comment-empty">
+                        <i class="bi bi-chat-square-text"></i>
+                        <p>Henüz yorum yok. İlk yorumu siz ekleyin!</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="comment-list">
+                        @foreach (var comment in Model.Comments)
+                        {
+                            <div class="comment-item">
+                                <div class="comment-avatar">
+                                    @if (!string.IsNullOrEmpty(comment.AuthorAvatarUrl))
+                                    {
+                                        <img src="@comment.AuthorAvatarUrl" alt="@comment.AuthorFullName" class="avatar-circle avatar-sm" />
+                                    }
+                                    else
+                                    {
+                                        <div class="avatar-fallback avatar-sm">
+                                            <i class="bi bi-person-fill"></i>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="comment-bubble">
+                                    <div class="comment-meta">
+                                        <span class="comment-author">@comment.AuthorFullName</span>
+                                        <span class="comment-role-badge role-@comment.AuthorRole.ToLower()">
+                                            @(comment.AuthorRole == "Admin" ? "Yönetici" : "Çalışan")
+                                        </span>
+                                        <span class="comment-date">
+                                            <i class="bi bi-clock me-1"></i>
+                                            @comment.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                        </span>
+                                    </div>
+                                    <div class="comment-content">@comment.Content</div>
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <form asp-controller="Ticket" asp-action="DeleteComment" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="commentId" value="@comment.Id" />
+                                            <input type="hidden" name="ticketId" value="@Model.Ticket.Id" />
+                                            <button type="submit" class="btn-comment-delete" title="Yorumu Sil">
+                                                <i class="bi bi-trash3"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+
+                <!-- Yorum Formu (Employee/Admin) -->
+                @if (Model.CanComment)
+                {
+                    <form asp-controller="Ticket" asp-action="AddComment" method="post" class="comment-form mt-3">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="ticketId" value="@Model.Ticket.Id" />
+                        <div class="comment-input-wrap">
+                            <textarea name="content" class="form-control comment-textarea"
+                                      placeholder="Dahili yorum ekleyin… (sadece çalışanlar ve yöneticiler görebilir)"
+                                      rows="3" maxlength="2000"></textarea>
+                            <button type="submit" class="btn btn-primary-custom mt-2">
+                                <i class="bi bi-send me-2"></i>Yorum Gönder
+                            </button>
+                        </div>
+                    </form>
+                }
+            </div>
+        </div>
+
+        <!-- Sağ: Detay Paneli -->
+        <div class="col-lg-4">
+
+            <!-- Reporter -->
+            <div class="detail-section-card mb-3">
+                <div class="detail-section-title">
+                    <i class="bi bi-person-circle me-2"></i>Bildiren (Reporter)
+                </div>
+                <div class="person-card-mini">
+                    @if (!string.IsNullOrEmpty(Model.Ticket.UserAvatarUrl))
+                    {
+                        <img src="@Model.Ticket.UserAvatarUrl" alt="@Model.Ticket.UserFullName" class="avatar-circle avatar-md" />
+                    }
+                    else
+                    {
+                        <div class="avatar-fallback avatar-md"><i class="bi bi-person-fill"></i></div>
+                    }
+                    <div class="person-info">
+                        <div class="person-name">@Model.Ticket.UserFullName</div>
+                        <div class="person-email">@Model.Ticket.UserEmail</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assignee -->
+            <div class="detail-section-card mb-3">
+                <div class="detail-section-title">
+                    <i class="bi bi-person-check me-2"></i>Atanan (Assignee)
+                </div>
+                @if (Model.Ticket.AssigneeId.HasValue)
+                {
+                    <div class="person-card-mini mb-3">
+                        @if (!string.IsNullOrEmpty(Model.Ticket.AssigneeAvatarUrl))
+                        {
+                            <img src="@Model.Ticket.AssigneeAvatarUrl" alt="@Model.Ticket.AssigneeFullName" class="avatar-circle avatar-md" />
+                        }
+                        else
+                        {
+                            <div class="avatar-fallback avatar-md"><i class="bi bi-person-fill"></i></div>
+                        }
+                        <div class="person-info">
+                            <div class="person-name">@Model.Ticket.AssigneeFullName</div>
+                            <div class="person-email">@Model.Ticket.AssigneeEmail</div>
+                        </div>
+                    </div>
+
+                    @* Atayan Yönetici *@
+                    @if (!string.IsNullOrEmpty(Model.Ticket.AssignedByFullName))
+                    {
+                        <div class="assigned-by-row mb-3">
+                            <i class="bi bi-shield-check assigned-by-icon"></i>
+                            <div class="assigned-by-info">
+                                <span class="assigned-by-label">Atayan Yönetici</span>
+                                <span class="assigned-by-name">@Model.Ticket.AssignedByFullName</span>
+                            </div>
+                            @if (Model.Ticket.AssignedAt.HasValue)
+                            {
+                                <span class="assigned-by-time">
+                                    @Model.Ticket.AssignedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                </span>
+                            }
+                        </div>
+                    }
+
+                    @if (Model.CanAssign)
+                    {
+                        <form asp-controller="Admin" asp-action="UnassignTicket" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="ticketId" value="@Model.Ticket.Id" />
+                            <button type="submit" class="btn btn-secondary-custom btn-sm w-100">
+                                <i class="bi bi-x-circle me-1"></i>Atamayı Kaldır
+                            </button>
+                        </form>
+                    }
+                }
+                else
+                {
+                    <div class="unassigned-badge mb-3">
+                        <i class="bi bi-person-dash me-2"></i>Henüz atanmadı
+                    </div>
+                }
+
+                @if (Model.CanAssign && Model.AvailableEmployees.Any())
+                {
+                    <form asp-controller="Admin" asp-action="AssignTicket" method="post" class="mt-2">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="ticketId" value="@Model.Ticket.Id" />
+                        <select name="employeeId" class="form-select form-control-custom mb-2">
+                            <option value="">— Çalışan Seçin —</option>
+                            @foreach (var emp in Model.AvailableEmployees)
+                            {
+                                var deptLabel = emp.Department != null
+                                    ? deptMap.GetValueOrDefault(emp.Department, emp.Department)
+                                    : "Genel";
+                                <option value="@emp.Id">@emp.FullName (@deptLabel)</option>
+                            }
+                        </select>
+                        <button type="submit" class="btn btn-primary-custom btn-sm w-100">
+                            <i class="bi bi-person-check me-1"></i>Ata
+                        </button>
+                    </form>
+                }
+            </div>
+
+            <!-- Ticket Detayları -->
+            <div class="detail-section-card mb-3">
+                <div class="detail-section-title">
+                    <i class="bi bi-info-circle me-2"></i>Detaylar
+                </div>
+                <div class="detail-meta-list">
+                    <div class="detail-meta-item">
+                        <span class="detail-meta-label">Departman</span>
+                        <span class="dept-badge dept-@Model.Ticket.Department.ToLower()">
+                            @deptMap.GetValueOrDefault(Model.Ticket.Department, Model.Ticket.Department)
+                        </span>
+                    </div>
+                    <div class="detail-meta-item">
+                        <span class="detail-meta-label">Öncelik</span>
+                        <span class="priority-badge priority-@Model.Ticket.Priority.ToLower()">
+                            @(Model.Ticket.Priority == "Low" ? "Düşük" : Model.Ticket.Priority == "Medium" ? "Orta" : "Yüksek")
+                        </span>
+                    </div>
+                    <div class="detail-meta-item">
+                        <span class="detail-meta-label">Durum</span>
+                        <span class="status-badge status-@Model.Ticket.Status.ToLower()">
+                            @(Model.Ticket.Status == "Open" ? "Açık" : Model.Ticket.Status == "InProgress" ? "İşlemde" : "Çözüldü")
+                        </span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.Ticket.AssignedByFullName))
+                    {
+                        <div class="detail-meta-item">
+                            <span class="detail-meta-label">Atayan</span>
+                            <span class="text-muted small">@Model.Ticket.AssignedByFullName</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Timeline (Collapsible) -->
+            <div class="detail-section-card">
+                <button class="timeline-toggle-btn" type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#timelineCollapse"
+                        aria-expanded="true"
+                        aria-controls="timelineCollapse">
+                    <span class="d-flex align-items-center gap-2">
+                        <i class="bi bi-clock-history"></i>
+                        <span class="timeline-toggle-label">Zaman Çizelgesi</span>
+                        <span class="timeline-event-count">@Model.Timeline.Count etkinlik</span>
+                    </span>
+                    <i class="bi bi-chevron-up timeline-chevron"></i>
+                </button>
+                <div class="collapse show" id="timelineCollapse">
+                    <div class="timeline mt-3">
+                        @foreach (var ev in Model.Timeline)
+                        {
+                            <div class="timeline-item">
+                                <div class="timeline-icon" style="background: @(ev.IconColor)22; color: @ev.IconColor">
+                                    <i class="bi @ev.Icon"></i>
+                                </div>
+                                <div class="timeline-body">
+                                    <div class="timeline-label">@ev.Label</div>
+                                    @if (!string.IsNullOrEmpty(ev.Detail))
+                                    {
+                                        <div class="timeline-detail">@ev.Detail</div>
+                                    }
+                                    <div class="timeline-time">
+                                        <i class="bi bi-clock me-1"></i>
+                                        @ev.Timestamp.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+// Status select renk senkronizasyonu
+document.querySelectorAll('.status-select').forEach(function(sel) {
+    sel.addEventListener('change', function() {
+        this.className = 'form-select form-control-custom status-select status-' + this.value.toLowerCase();
+        if(this.value) this.form.submit();
+    });
+});
+</script>
+}
