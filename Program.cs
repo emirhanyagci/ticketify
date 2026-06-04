@@ -1,3 +1,4 @@
+using Microsoft.OpenApi;
 using Ticketify.Repositories;
 using Ticketify.Services;
 using Ticketify.Models;
@@ -6,6 +7,21 @@ var builder = WebApplication.CreateBuilder(args);
 
 // MVC
 builder.Services.AddControllersWithViews();
+
+// API Controllers (Swagger için)
+builder.Services.AddControllers();
+
+// Swagger / OpenAPI
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Ticketify API",
+        Version = "v1",
+        Description = "Ticketify destek talebi yönetim sistemi REST API'si"
+    });
+});
 
 // Cookie Authentication
 builder.Services.AddAuthentication("CookieAuth")
@@ -22,6 +38,7 @@ builder.Services.AddAuthentication("CookieAuth")
 builder.Services.AddAuthorization();
 
 // Repository Pattern — Singleton (thread-safe via SemaphoreSlim)
+// dependency injection kismi
 builder.Services.AddSingleton<IUserRepository, JsonUserRepository>();
 builder.Services.AddSingleton<ITicketRepository, JsonTicketRepository>();
 builder.Services.AddSingleton<ICommentRepository, JsonCommentRepository>();
@@ -38,11 +55,25 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
 }
 
+// Swagger UI (sadece development'ta)
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ticketify API v1");
+        c.RoutePrefix = "swagger";
+        c.DocumentTitle = "Ticketify API Dokümantasyonu";
+        c.DefaultModelsExpandDepth(-1); // Model şemalarını kapalı başlat
+    });
+}
+
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapControllers(); // API route'ları ([Route("api/...")] ile)
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
