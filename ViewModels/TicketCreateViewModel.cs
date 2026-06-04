@@ -18,10 +18,23 @@ public class TicketCreateViewModel
     [Display(Name = "Öncelik")]
     public string Priority { get; set; } = "Medium";
 
+    [Required(ErrorMessage = "Departman seçiniz.")]
+    [Display(Name = "Departman")]
+    public string Department { get; set; } = "General";
+
     public static readonly Dictionary<string, string> PriorityOptions = new()
     {
         { "Low", "Düşük" },
         { "Medium", "Orta" },
         { "High", "Yüksek" }
+    };
+
+    public static readonly Dictionary<string, string> DepartmentOptions = new()
+    {
+        { "General", "Genel" },
+        { "Software", "Yazılım" },
+        { "Hardware", "Donanım" },
+        { "Network", "Ağ / Altyapı" },
+        { "Other", "Diğer" }
     };
 }
