@@ -16,7 +16,7 @@
                         <p class="auth-subtitle">Ticketify hesabınıza giriş yapın</p>
                     </div>
 
-                    <form asp-action="Login" method="post">
+                    <form asp-action="Login" method="post" id="loginForm">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
 
@@ -26,7 +26,7 @@
                             <label asp-for="Email" class="form-label-custom"></label>
                             <div class="input-group-custom">
                                 <span class="input-icon"><i class="bi bi-envelope"></i></span>
-                                <input asp-for="Email" class="form-control-custom" placeholder="ornek@mail.com" autocomplete="email" />
+                                <input asp-for="Email" class="form-control-custom" placeholder="e-posta adresiniz" autocomplete="email" />
                             </div>
                             <span asp-validation-for="Email" class="field-error"></span>
                         </div>
@@ -45,6 +45,10 @@
                         </button>
                     </form>
 
+                    <button type="button" class="btn btn-autofill w-100 mb-3" id="btnAdminFill" onclick="fillAdmin()">
+                        <i class="bi bi-lightning-charge-fill me-2"></i>Test: Admin Girişi
+                    </button>
+
                     <div class="text-center">
                         <span class="text-muted small">Hesabınız yok mu?</span>
                         <a asp-action="Register" class="auth-link ms-1">Kayıt Olun</a>
@@ -57,4 +61,18 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+    function fillAdmin() {
+        document.getElementById('Email').value = 'admin@@ticketify.com';
+        document.getElementById('Password').value = 'Admin123!';
+
+        var btn = document.getElementById('btnAdminFill');
+        btn.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>Dolduruldu!';
+        btn.classList.add('filled');
+        setTimeout(function() {
+            btn.innerHTML = '<i class="bi bi-lightning-charge-fill me-2"></i>Test: Admin Girişi';
+            btn.classList.remove('filled');
+        }, 1500);
+    }
+    </script>
 }
